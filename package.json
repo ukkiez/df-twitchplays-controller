@@ -1,5 +1,6 @@
 {
   "dependencies": {
-    "@nut-tree/nut-js": "^2.1.0"
+    "@nut-tree/nut-js": "^2.1.0",
+    "node-global-key-listener": "^0.1.1"
   }
 }

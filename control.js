@@ -7,12 +7,13 @@ const _inputsByCommandKey = {
   w: "left",
 
   dash: "dash",
-
-  downdash: "downdash",
+  downdash: "downDash",
 
   jump: "fh",
   sh: "sh",
   fh: "fh",
+
+  dashjump: "dashJump",
 }
 const inputsByCommandKey = new Map( Object.entries( _inputsByCommandKey ) );
 
