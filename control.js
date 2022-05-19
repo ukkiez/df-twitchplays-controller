@@ -38,7 +38,7 @@ const getCommands = ( message ) => {
   const commands = [];
 
   // first start getting commands from the checklist, and removing those parts
-  // from the message first (e.g. remove "dash" from the message)
+  // from the message (e.g. remove "downdash", then "jump", etc.)
   for ( const check of commandCheckList ) {
     const command = {
       key: undefined,
