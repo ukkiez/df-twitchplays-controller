@@ -1,3 +1,5 @@
+// const { client } = require( "../client.js" );
+
 const { GlobalKeyboardListener } = require( "node-global-key-listener" );
 
 const v = new GlobalKeyboardListener();
@@ -8,15 +10,28 @@ v.addListener( function( e, down ) {
   }
 } );
 
-const { delay } = require( "./util/index.js" );
-
-const sleep = ms => new Promise( resolve => setTimeout( () => resolve(), ms ) );
-
 const {
-  parse: p
+  parse,
 } = require( "./control.js" );
 
-setTimeout( () => {
-  p( "ne-" );
-  p( "sh" );
-}, 1000 );
+parse( "n+" );
+
+// // called every time a message is sent in the chat
+// client.on( "message", ( target, context, message, self ) => {
+//   // ignore messages from the bot itself
+//   if ( self ) {
+//     return;
+//   }
+
+//   const userName = context[ "display-name" ];
+//   if ( userName.toLowerCase() === "nightbot" ) {
+//     return;
+//   }
+
+//   const { "user-id": userId } = context;
+//   if ( !userId ) {
+//     return;
+//   }
+
+//   parse( message );
+// } );
