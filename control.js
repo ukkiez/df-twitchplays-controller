@@ -233,7 +233,7 @@ const parse = ( message ) => {
 };
 
 const restart = () => {
-  exec( { key: "restart" } );
+  exec( [ { key: "restart" } ] );
 }
 
 module.exports = { parse, restart };
