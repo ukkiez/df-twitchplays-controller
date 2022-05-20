@@ -36,6 +36,12 @@ const _inputsByCommandKey = {
   uh: "uh",
   h: "h",
   dh: "dh",
+
+  neut: "neutral",
+  neutral: "neutral",
+
+  release: "releaseAll",
+  rel: "releaseAll",
 }
 
 const inputsByCommandKey = new Map( Object.entries( _inputsByCommandKey ) );

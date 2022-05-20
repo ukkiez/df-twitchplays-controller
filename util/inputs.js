@@ -19,6 +19,14 @@ const inputs = {
     await new Promise( r => setTimeout(() => r(), delay ) );
   },
 
+  neutral: () => {
+    releaseAll( false, true );
+  },
+
+  releaseAll: () => {
+    releaseAll( true );
+  },
+
   restart: () => {
     // restart the map
     tap( [ R, R ], framesToMs( 10 ) );

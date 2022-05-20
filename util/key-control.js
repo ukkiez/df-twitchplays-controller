@@ -7,6 +7,10 @@ keyboard.config.autoDelayMs = 33;
 // being held, if someone wants to go Right we need to first release Left
 const heldKeys = {};
 
+const allKeys = [ Up, Down, Left, Right, _jump, _light, _heavy, _dash ];
+
+const directions = [ Up, Down, Left, Right ];
+
 const blockingKeys = {
   [ Left ]: Right,
   [ Right ]: Left,
@@ -20,10 +24,24 @@ const release = async ( key ) => {
   heldKeys[ key ] = false;
 }
 
-const releaseAll = async () => {
-  await Promise.all( Object.keys( heldKeys ).map( key => keyboard.pressKey( key ) ) );
+const releaseAll = async ( _allKeys, _directionsOnly ) => {
+  let keys;
+  if ( _allKeys ) {
+    keys = [ ...allKeys ];
+  }
+  else if ( _directionsOnly ) {
+    keys = [ ...directions ];
+  }
+  else {
+    keys = Object.keys( heldKeys );
+  }
 
-  for ( const key of Object.keys( heldKeys ) ) {
+  // only try to release already held keys
+  keys = keys.filter( key => heldKeys[ key ] );
+
+  await Promise.all( keys.map( key => release( key ) ) );
+
+  for ( const key of keys ) {
     heldKeys[ key ] = false;
   }
 }
@@ -36,12 +54,12 @@ const tap = async ( keys, delay ) => {
   if ( delay ) {
     setTimeout( async () => {
       await Promise.all( keys.map( key => keyboard.pressKey( key ) ) );
-      await Promise.all( keys.map( key => keyboard.releaseKey( key ) ) );
+      await Promise.all( keys.map( key => release( key ) ) );
     }, delay );
   }
   else {
     await Promise.all( keys.map( key => keyboard.pressKey( key ) ) );
-    await Promise.all( keys.map( key => keyboard.releaseKey( key ) ) );
+    await Promise.all( keys.map( key => release( key ) ) );
   }
 }
 
@@ -52,7 +70,7 @@ const hold = async ( keys, duration, delay ) => {
 
       if ( duration ) {
         setTimeout( async () => {
-          await Promise.all( keys.map( key => keyboard.releaseKey( key ) ) );
+          await Promise.all( keys.map( key => release( key ) ) );
         }, duration );
       }
     }, delay );
@@ -62,7 +80,7 @@ const hold = async ( keys, duration, delay ) => {
 
     if ( duration ) {
       setTimeout( async () => {
-        await Promise.all( keys.map( key => keyboard.releaseKey( key ) ) );
+        await Promise.all( keys.map( key => release( key ) ) );
       }, duration );
     }
   }
