@@ -20,6 +20,7 @@ const _inputsByCommandKey = {
   downdash: "downDash",
 
   jump: "fh",
+  j: "fh",
   sh: "sh",
   fh: "fh",
 
