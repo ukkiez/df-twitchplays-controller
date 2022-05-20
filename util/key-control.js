@@ -24,12 +24,9 @@ const release = async ( key ) => {
   heldKeys[ key ] = false;
 }
 
-const releaseAll = async ( _allKeys, _directionsOnly ) => {
+const releaseAll = async ( _directionsOnly ) => {
   let keys;
-  if ( _allKeys ) {
-    keys = [ ...allKeys ];
-  }
-  else if ( _directionsOnly ) {
+  if ( _directionsOnly ) {
     keys = [ ...directions ];
   }
   else {

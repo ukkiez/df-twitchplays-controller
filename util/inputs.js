@@ -20,11 +20,11 @@ const inputs = {
   },
 
   neutral: () => {
-    releaseAll( false, true );
+    releaseAll( true );
   },
 
   releaseAll: () => {
-    releaseAll( true );
+    releaseAll();
   },
 
   restart: () => {
