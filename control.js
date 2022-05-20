@@ -59,13 +59,9 @@ const parseMessage = ( message ) => {
   let possibleKeys;
   let currentString = "";
   for ( let i = 0; i <= data.length - 1; i++ ) {
-    console.error( { i } );
     const character = data[ i ];
 
-    console.log( character );
-
     if ( [ "+", "-" ].includes( character ) ) {
-      console.log( "+ or -" );
       if ( possibleKeys?.find( key => key === currentString ) ) {
         // even though there are multiple possibilities left, the + or -
         // indicates that we already found the full command
@@ -97,14 +93,10 @@ const parseMessage = ( message ) => {
     }
 
     checkPossibleKeys: if ( possibleKeys ) {
-      console.log( 1 );
-      console.log( { possibleKeys } );
-
       currentString += character;
       const filteredPossibleKeys = possibleKeys.filter( key => key.startsWith( currentString ) );
 
       if ( filteredPossibleKeys.length === 0 ) {
-        console.log( "length === 0" );
         const _key = possibleKeys.find( key => key === currentString.substring( 0, currentString.length - 1 ) );
         if ( _key ) {
           // the previous iteration already found a command, and we're possibly
@@ -125,7 +117,6 @@ const parseMessage = ( message ) => {
         return [];
       }
       else if ( filteredPossibleKeys.length === 1 ) {
-        console.log( "length === 1" );
         commands.push( {
           key: filteredPossibleKeys[ 0 ],
           hold: false,
@@ -142,7 +133,6 @@ const parseMessage = ( message ) => {
         continue;
       }
       else if ( data[ i + 1 ] === undefined ) {
-        console.log( "last iteration" );
         // we already parsed the full message, so check if the current string
         // matches a command key fully, otherwise we know the message is invalid
         if ( !possibleKeys.find( key => key === currentString ) ) {
@@ -162,7 +152,6 @@ const parseMessage = ( message ) => {
     }
 
     if ( commandKeysByInitial.has( character ) ) {
-      console.log( 2 );
       possibleKeys = commandKeysByInitial.get( character );
 
       if ( possibleKeys && ( data[ i + 1 ] === undefined ) ) {
@@ -190,9 +179,15 @@ const parseMessage = ( message ) => {
           delay: 0,
         } );
 
+        // skip iterations until we get to where the end of this key would be
+        i += ( possibleKeys[ 0 ].length - 1 );
+
         // reset the possible keys, since we've fully parsed this particular
         // command
         possibleKeys = undefined;
+
+        currentString = "";
+        continue;
       }
 
       // start keeping track of the string, and build it as we attempt to figure
@@ -212,11 +207,12 @@ const parseMessage = ( message ) => {
 
 const exec = async ( commands ) => {
   for ( const { key, hold, delay } of commands ) {
-    if ( !inputs[ inputsByCommandKey.get( key ) ] ) {
-      console.error( `Unknown command "${ inputsByCommandKey.get( key ) }".` );
+    const input = inputsByCommandKey.get( key );
+    if ( !inputs[ input ] ) {
+      console.error( `Unknown input "${ input } (key: ${ key }".` );
     }
 
-    inputs[ inputsByCommandKey.get( key ) ]( hold );
+    inputs[ input ]( hold );
     if ( delay ) {
       await inputs.sleep( delay );
     }
