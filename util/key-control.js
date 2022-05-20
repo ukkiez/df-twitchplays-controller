@@ -20,6 +20,14 @@ const release = async ( key ) => {
   heldKeys[ key ] = false;
 }
 
+const releaseAll = async () => {
+  await Promise.all( Object.keys( heldKeys ).map( key => keyboard.pressKey( key ) ) );
+
+  for ( const key of heldKeys ) {
+    heldKeys[ key ] = false;
+  }
+}
+
 const tap = async ( keys, delay ) => {
   if ( !Array.isArray( keys ) ) {
     keys = [ keys ];
@@ -103,4 +111,4 @@ const press = async ( _hold, keys, duration, delay ) => {
   }
 }
 
-module.exports = { tap, hold, press };
+module.exports = { tap, hold, press, release, releaseAll };
