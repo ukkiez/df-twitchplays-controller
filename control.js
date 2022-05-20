@@ -24,6 +24,7 @@ const _inputsByCommandKey = {
   fh: "fh",
 
   dashjump: "dashJump",
+  dj: "dashJump",
 
   light: "l",
   ul: "ul",
@@ -35,137 +36,175 @@ const _inputsByCommandKey = {
   h: "h",
   dh: "dh",
 }
+
 const inputsByCommandKey = new Map( Object.entries( _inputsByCommandKey ) );
 
-const specialCommands = [
-  "dash",
-  "downdash",
+const commandKeysByInitial = new Map();
+for ( const key of Object.keys( _inputsByCommandKey ) ) {
+  const initial = key[ 0 ];
+  if ( !commandKeysByInitial.has( initial ) ) {
+    commandKeysByInitial.set( initial, [ key ] );
+  }
+  else {
+    commandKeysByInitial.get( initial ).push( key );
+  }
+}
 
-  "jump",
-  "sh",
-  "fh",
+const parseMessage = ( message ) => {
+  message = message.trim();
 
-  "light",
-  "ul",
-  "dl",
+  const commands = [];
 
-  "heavy",
-  "uh",
-  "dh",
-];
-// sort the checklist specifically so that longer strings are checked earlier
-// than others, reason is that e.g. we want to check "downdash" before "dash",
-// because if we check "dash" earlier, we'll potentially not be parsing
-// "downdash" but rather "dash" and "down"
-specialCommands.sort( function( a, b ) {
-  return ( b.length - a.length );
-} );
+  const data = Array.from( message );
+  let possibleKeys;
+  let currentString = "";
+  for ( let i = 0; i <= data.length - 1; i++ ) {
+    console.error( { i } );
+    const character = data[ i ];
 
-const getSpecialCommands = ( message, _commands ) => {
-  const commands = _commands || [];
+    console.log( character );
 
-  // first start getting commands from the checklist, and removing those parts
-  // from the message (e.g. remove "downdash", then "jump", etc.)
-  for ( const check of specialCommands ) {
-    const command = {
-      key: undefined,
-      hold: false,
-      delay: 0,
-    };
+    if ( [ "+", "-" ].includes( character ) ) {
+      console.log( "+ or -" );
+      if ( possibleKeys?.find( key => key === currentString ) ) {
+        // even though there are multiple possibilities left, the + or -
+        // indicates that we already found the full command
+        commands.push( {
+          key: currentString,
+          hold: false,
+          delay: 0,
+        } );
 
-    if ( !message.includes( check ) ) {
+        possibleKeys = undefined;
+        currentString = "";
+      }
+
+      const _lastCommand = commands[ commands.length - 1 ];
+      if ( !_lastCommand?.key ) {
+        // this message was formatted incorrectly, as no command was found
+        // before this symbol
+        return [];
+      }
+
+      if ( character === "+" ) {
+        _lastCommand.delay += defaultDelay;
+      }
+      else if ( character === "-" ) {
+        _lastCommand.hold = true;
+      }
+
       continue;
     }
 
-    const match = message.match( check );
+    checkPossibleKeys: if ( possibleKeys ) {
+      console.log( 1 );
+      console.log( { possibleKeys } );
 
-    if ( !inputsByCommandKey.has( match[ 0 ] ) ) {
-      throw new Error( "Matched command from checklist, but did not find related input." );
-    }
+      currentString += character;
+      const filteredPossibleKeys = possibleKeys.filter( key => key.startsWith( currentString ) );
 
-    const index = match.index;
-    let length = match[ 0 ].length;
+      if ( filteredPossibleKeys.length === 0 ) {
+        console.log( "length === 0" );
+        const _key = possibleKeys.find( key => key === currentString.substring( 0, currentString.length - 1 ) );
+        if ( _key ) {
+          // the previous iteration already found a command, and we're possibly
+          // starting a new one right now
+          commands.push( {
+            key: _key,
+            hold: false,
+            delay: 0,
+          } );
 
-    command.key = match[ 0 ];
-    commands.push( command );
+          possibleKeys = undefined;
 
-    if ( message[ index + length ] ) {
-      // check if someone accidentally put a symbol (like "-") after one of
-      // these commands, and remove it if that's the case
-      for ( let i = ( index + length ); i <= message.length - 1; i++ ) {
-        if ( message[ i ] === "+" ) {
-          command.delay += defaultDelay;
-          length++;
-          continue;
+          // continue with parsing this character
+          break checkPossibleKeys;
         }
 
-        if ( /[^\w]/.test( message[ i ] ) ) {
-          // just increase the stored length, since we'll be removing up to and
-          // including that part of the string below
-          length++;
-        }
-        else {
-          break;
-        }
+        // this message is invalid
+        return [];
       }
-    }
+      else if ( filteredPossibleKeys.length === 1 ) {
+        console.log( "length === 1" );
+        commands.push( {
+          key: filteredPossibleKeys[ 0 ],
+          hold: false,
+          delay: 0,
+        } );
 
-    // remove the matched part from the message
-    message = message.substring( 0, index ) + message.substring( index + length );
+        // skip iterations until we get to where the end of this key would be
+        i += ( filteredPossibleKeys[ 0 ].length - currentString.length );
 
-    if ( !message ) {
-      // we've already parsed the complete message
-      return { message, commands };
-    }
-    else {
-      return getSpecialCommands( message, commands );
-    }
-  }
-
-  return { message, commands };
-}
-
-const getCommands = ( message ) => {
-  message = message.trim();
-
-  let commands;
-  ( { message, commands = [] } = getSpecialCommands( message ) );
-
-  const data = Array.from( message );
-  for ( let i = 0; i <= data.length - 1; i++ ) {
-    const command = {
-      key: undefined,
-      hold: false,
-      delay: 0,
-    };
-
-    const char = data[ i ];
-
-    if ( [ "-", "+" ].includes( char ) ) {
-      if ( !commands?.length ) {
+        // reset the possible keys, since we've fully parsed this particular
+        // command
+        possibleKeys = undefined;
+        currentString = "";
         continue;
       }
+      else if ( data[ i + 1 ] === undefined ) {
+        console.log( "last iteration" );
+        // we already parsed the full message, so check if the current string
+        // matches a command key fully, otherwise we know the message is invalid
+        if ( !possibleKeys.find( key => key === currentString ) ) {
+          return [];
+        }
 
-      // check if the next input is a "-" to indicate the user wants to hold the
-      // last parsed input, or a "+" character to indicate delay
-      const _lastCommand = commands[ commands.length - 1 ];
-      if ( char === "-" ) {
-        _lastCommand.hold = true;
+        commands.push( {
+          key: currentString,
+          hold: false,
+          delay: 0,
+        } );
+        break;
       }
-      else if ( char === "+" ) {
-        _lastCommand.delay += defaultDelay;
-      }
+
+      possibleKeys = filteredPossibleKeys;
+      continue;
     }
 
-    if ( !inputsByCommandKey.has( char ) ) {
-      // it is either the case that this is a regular message, or is formatted
-      // incorrectly, so just return nothing
-      return [];
+    if ( commandKeysByInitial.has( character ) ) {
+      console.log( 2 );
+      possibleKeys = commandKeysByInitial.get( character );
+
+      if ( possibleKeys && ( data[ i + 1 ] === undefined ) ) {
+        // it's the last iteration, so check if we can find a exact match for a
+        // command, otherwise the message is invalid
+        const _key = possibleKeys.find( key => key === character );
+        if ( _key ) {
+          commands.push( {
+            key: _key,
+            hold: false,
+            delay: 0,
+          } );
+        }
+        else {
+          return [];
+        }
+
+        break;
+      }
+
+      if ( possibleKeys.length === 1 ) {
+        commands.push( {
+          key: possibleKeys[ 0 ],
+          hold: false,
+          delay: 0,
+        } );
+
+        // reset the possible keys, since we've fully parsed this particular
+        // command
+        possibleKeys = undefined;
+      }
+
+      // start keeping track of the string, and build it as we attempt to figure
+      // out which command key this string refers to (if any)
+      currentString = character;
+
+      continue;
     }
 
-    command.key = char;
-
-    commands.push( command );
+    // this message is not formatted correctly, or it is not supposed to be a
+    // command list at all
+    return [];
   }
 
   return commands;
@@ -174,7 +213,7 @@ const getCommands = ( message ) => {
 const exec = async ( commands ) => {
   for ( const { key, hold, delay } of commands ) {
     if ( !inputs[ inputsByCommandKey.get( key ) ] ) {
-      throw new Error( `Unknown command "${ inputsByCommandKey.get( key ) }".` );
+      console.error( `Unknown command "${ inputsByCommandKey.get( key ) }".` );
     }
 
     inputs[ inputsByCommandKey.get( key ) ]( hold );
@@ -185,7 +224,9 @@ const exec = async ( commands ) => {
 }
 
 const parse = ( message ) => {
-  const commands = getCommands( message );
+  console.time( "parseMessage()" );
+  const commands = parseMessage( message );
+  console.timeEnd( "parseMessage()" );
 
   console.log( { commands } );
 
