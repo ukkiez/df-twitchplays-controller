@@ -23,7 +23,7 @@ const release = async ( key ) => {
 const releaseAll = async () => {
   await Promise.all( Object.keys( heldKeys ).map( key => keyboard.pressKey( key ) ) );
 
-  for ( const key of heldKeys ) {
+  for ( const key of Object.keys( heldKeys ) ) {
     heldKeys[ key ] = false;
   }
 }
@@ -90,7 +90,7 @@ const press = async ( _hold, keys, duration, delay ) => {
       }
     }
 
-    if ( heldKeys.includes( blocker ) ) {
+    if ( heldKeys[ blocker ] ) {
       // some keys block other keys from their function (for example, a left
       // cursor key being held blocks the right cursor key from having any
       // effect), so if we want to tap/hold one of these keys we'll need to
